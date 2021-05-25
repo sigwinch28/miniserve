@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"runtime/debug"
 	"time"
 
 	"aead.dev/minisign"
@@ -81,7 +82,31 @@ type Signer struct {
 	By            string
 	PrivateKey    minisign.PrivateKey
 	PublicKey     minisign.PublicKey
-	PublicKeyText []byte
+	PublicKeyText string
+}
+
+func NewSigner(by, privKeyFile, pubKeyFile, password string) (Signer, error) {
+	var signer Signer
+	signer.By = by
+
+	publicKey, err := minisign.PublicKeyFromFile(pubKeyFile)
+	if err != nil {
+		return signer, err
+	}
+	signer.PublicKey = publicKey
+	signer.PublicKeyText = publicKey.String()
+
+	privateKey, err := minisign.PrivateKeyFromFile(password, privKeyFile)
+	if err != nil {
+		return signer, err
+	}
+	signer.PrivateKey = privateKey
+
+	// scrypt (used to decrypt the key) uses a lot of memory (deliberately)
+	// let's nudge the runtime to recover the memory now.
+	// https://github.com/golang/go/issues/20000
+	debug.FreeOSMemory()
+	return signer, nil
 }
 
 func (signer *Signer) comments(at time.Time) (string, string, error) {

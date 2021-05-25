@@ -77,32 +77,40 @@
 
       <p>
         Make a POST request to
-        <a href="{{ .BaseURL }}">{{ .BaseURL }}</a> with a hex-encoded
+        <a href="{{ .BaseURL }}/sign">{{ .BaseURL }}/sign</a> with a hex-encoded
         BLAKE2b-512 digest as the "digest" form value. The digest must be 64
         bytes, i.e. 128 hex characters.
       </p>
 
       <pre class="code-block">
 <code class="shell">b2sum -l 512 file | awk '{printf $1}' \
-  | curl -f -F "digest=<-" {{ .BaseURL }} -o file.minisig</code></pre>
+  | curl -f -F "digest=<-" {{ .BaseURL }}/sign -o file.minisig</code></pre>
 
       <h2>Verify a signature</h2>
 
       <p>
-        Download the public key from
-        <a href="{{ .BaseURL }}/key.pub">{{ .BaseURL }}/key.pub</a> and verify
-        the signature as usual via minisign.
+        You can either verify the signature using the server's public key
+        directly:
       </p>
 
       <pre class="code-block">
-<code class="shell">curl -f {{ .BaseURL }}/key.pub -o {{ .Name }}.pub</code>
-<code class="shell">minisign -V -p {{ .Name }}.pub -m file</code>
-<code>Signature and comment signature verified
-Trusted comment: {"at":1621945330,"by":"{{ .BaseURL }}","typ":"minisig","v":"1"}</code></pre>
+<code class="shell">minisign -V -P {{ .Signer.PublicKeyText }} -m file</code></pre>
 
       <p>
-        The <em>trusted comment</em> contains a JSON object with the following
-        keys:
+        or you can download the public key from
+        <a href="{{ .BaseURL }}/minisign.pub">{{ .BaseURL }}/minisign.pub</a>
+        and verify the signature as usual via minisign:
+      </p>
+
+      <pre class="code-block">
+<code class="shell">curl -f {{ .BaseURL }}/minisign.pub -o {{ .Name }}.pub</code>
+<code class="shell">minisign -V -p {{ .Name }}.pub -m file</code></pre>
+
+      <h2>The Trusted Comment</h2>
+
+      <p>
+        The <em>trusted comment</em> in the signature contains a JSON object
+        with the following keys:
       </p>
 
       <dl>
@@ -134,7 +142,7 @@ Trusted comment: {"at":1621945330,"by":"{{ .BaseURL }}","typ":"minisig","v":"1"}
       <h3>Can I use this for ...?</h3>
 
       <p>
-        Probably not. This is a proof-of-concept and it isn't intended for any
+        Probably not. This is a proof-of-concept and it isn't intended for
         production use.
       </p>
     </main>

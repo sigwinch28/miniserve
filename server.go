@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html/template"
 	"io"
+	"log"
 	"net/http"
 	"time"
 
@@ -37,8 +38,8 @@ func NewServer(config ServerConfig) Server {
 	}
 
 	router.GET("/", server.indexHandler)
-	router.POST("/", server.signHandler)
-	router.GET("/key.pub", server.keyHandler)
+	router.POST("/sign", server.signHandler)
+	router.GET("/minisign.pub", server.keyHandler)
 
 	return server
 }
@@ -48,7 +49,9 @@ func (server *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func (server *Server) indexHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	server.templates.ExecuteTemplate(w, "index.html.tmpl", server.config)
+	if err := server.templates.ExecuteTemplate(w, "index.html.tmpl", server.config); err != nil {
+		log.Println(err)
+	}
 }
 
 func (server *Server) signHandler(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {

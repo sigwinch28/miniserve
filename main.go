@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"aead.dev/minisign"
 	"github.com/gorilla/handlers"
 )
 
@@ -32,12 +31,7 @@ func main() {
 
 	log.Println("Loading keys...")
 
-	publicKey, err := minisign.PublicKeyFromFile(pubKeyFileFlag)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	privateKey, err := minisign.PrivateKeyFromFile("", secKeyFileFlag)
+	signer, err := NewSigner(urlFlag, secKeyFileFlag, pubKeyFileFlag, "")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -45,11 +39,7 @@ func main() {
 	config := ServerConfig{
 		Name:    nameFlag,
 		BaseURL: urlFlag,
-		Signer: Signer{
-			By:         urlFlag,
-			PrivateKey: privateKey,
-			PublicKey:  publicKey,
-		},
+		Signer:  signer,
 	}
 
 	server := NewServer(config)
