@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="description"
+      content="a dead simple timestamping service powered by minisign"
+    />
+    <meta name="keywords" content="minisign, timestamp, cryptography" />
+    <meta name="author" content="Joe Harrison" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{ .Name }}</title>
+    <style>
+      body,
+      input[type="text"] {
+        font-family: monospace;
+      }
+
+      pre code.shell::before {
+        content: "$ ";
+      }
+
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        text-transform: uppercase;
+      }
+
+      #header,
+      #footer {
+        text-align: center;
+        text-transform: lowercase;
+        margin: 4rem 0;
+      }
+
+      main {
+        max-width: 82ch;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .code-block {
+        overflow-x: auto;
+        display: block;
+        padding-left: 1ch;
+      }
+    </style>
+  </head>
+  <body>
+    <header id="header">
+      <h1>{{ .Name }}</h1>
+      <p>
+        A dead simple timestamping service powered by
+        <a href="http://jedisct1.github.io/minisign/">minisign</a>.
+      </p>
+    </header>
+
+    <main>
+      <p>
+        Provide evidence to a third party that data existed at a certain point
+        in time.
+      </p>
+      <h2>How it works</h2>
+
+      <p>
+        You send us a BLAKE2b-512 digest of your data in an HTTP request. We
+        sign the digest using our secret key and then send you the signature in
+        the HTTP response. The signature contains the time (with second
+        precision) when we generated the signature. Anyone can verify the
+        signature using our public key.
+      </p>
+
+      <h2>Get a signature</h2>
+
+      <p>
+        Make a POST request to
+        <a href="{{ .BaseURL }}">{{ .BaseURL }}</a> with a hex-encoded
+        BLAKE2b-512 digest as the "digest" form value. The digest must be 64
+        bytes, i.e. 128 hex characters.
+      </p>
+
+      <pre class="code-block">
+<code class="shell">b2sum -l 512 file | awk '{printf $1}' \
+  | curl -f -F "digest=<-" {{ .BaseURL }} -o file.minisig</code></pre>
+
+      <h2>Verify a signature</h2>
+
+      <p>
+        Download the public key from
+        <a href="{{ .BaseURL }}/key.pub">{{ .BaseURL }}/key.pub</a> and verify
+        the signature as usual via minisign.
+      </p>
+
+      <pre class="code-block">
+<code class="shell">curl -f {{ .BaseURL }}/key.pub -o {{ .Name }}.pub</code>
+<code class="shell">minisign -V -p {{ .Name }}.pub -m file</code>
+<code>Signature and comment signature verified
+Trusted comment: {"at":1621945330,"by":"{{ .BaseURL }}","typ":"minisig","v":"1"}</code></pre>
+
+      <p>
+        The <em>trusted comment</em> contains a JSON object with the following
+        keys:
+      </p>
+
+      <dl>
+        <dt>at</dt>
+        <dd>
+          Unix timestamp when the signature was created (with second precision).
+        </dd>
+
+        <dt>by</dt>
+        <dd>URL of the service which generated the signature.</dd>
+
+        <dt>typ</dt>
+        <dd>Signature type (always the constant "minisig").</dd>
+
+        <dt>v</dt>
+        <dd>Signature version (currently "1").</dd>
+      </dl>
+
+      <h2>FAQ</h2>
+
+      <h3>What guarantees do you make about ...?</h3>
+
+      <p>There are no guarantees. There might be in the future.</p>
+
+      <h3>How can I trust you to (not) ...?</h3>
+
+      <p>You can't.</p>
+
+      <h3>Can I use this for ...?</h3>
+
+      <p>
+        Probably not. This is a proof-of-concept and it isn't intended for any
+        production use.
+      </p>
+    </main>
+    <footer id="footer">
+      <p>
+        Powered by
+        <a href="https://github.com/sigwinch28/miniserve"
+          >sigwinch28/miniserve</a
+        >, an open source minisign timestamping service.<br />
+        Uses <a href="https://github.com/aead/minisign">aead/minisign</a>, an
+        open source Go re-implementation of minisign.<br />
+        Based on
+        <a href="https://jedisct1.github.io/minisign">jedisct1/minisign</a>, the
+        original open source C implementation of minisign.
+      </p>
+
+      <p>Made with 🤪 on a 💻</p>
+    </footer>
+  </body>
+</html>
